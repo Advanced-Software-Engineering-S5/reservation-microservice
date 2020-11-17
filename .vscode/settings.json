@@ -1,0 +1,20 @@
+{
+    "python.linting.enabled": true,
+    "python.linting.pylintArgs": [
+         "--load-plugins",
+         "pylint-flask"
+    ],
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./reservations",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": true,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "reservations",
+    ]
+}

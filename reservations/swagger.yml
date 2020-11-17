@@ -1,0 +1,143 @@
+openapi: 3.0.1
+info:
+  title: Reservations Service API
+  description: Reservations from GoOutSafe with Microservices
+  version: "0.1"
+servers:
+- url: /
+paths:
+  /customer_reservations/{user_id}:
+    get:
+      tags:
+      - Reservations
+      summary: Get the future reservations of the user specified by the given user_id
+      operationId: reservations.customer_reservations.get_reservations
+      parameters:
+      - name: user_id
+        in: path
+        description: User's Unique identifier
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9-]+$
+          type: string
+      responses:
+        200:
+          description: Return the future reservations of the user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+        404:
+          description: No reservations associated with the given user_id
+          content: {}
+  /customer_reservation/{reservation_id}:
+    delete:
+      tags:
+      - Reservations
+      summary: Delete the reservation specified by the given reservation_id
+      operationId: reservations.customer_reservations.delete_user_reservation
+      parameters:
+      - name: reservation_id
+        in: path
+        description: Reservation's Unique identifier
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9-]+$
+          type: string
+      responses:
+        204:
+          description: Reservation deleted correctly
+
+        401:
+          description: You must be authorized to perform this operation
+          content: {}
+              
+        404:
+          description: The specified reservation does not exist
+          content: {}
+    put:
+      tags:
+      - Reservations
+      summary: Update the reservation specified by the given reservation_id
+      operationId: reservations.customer_reservations.update_user_reservation
+      parameters:
+      - name: reservation_id
+        in: path
+        description: Reservation's Unique identifier
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9-]+$
+          type: string
+      responses:
+        204:
+          description: Reservation updated correctly
+        401: 
+          description: You must be authorized to perform this operation
+          content: {}
+        404: 
+          description: The specified reservation does not exist
+          content: {}
+components:
+  schemas:
+    Reservation:
+      required:
+      - id
+      - user_id
+      - restaurant_id
+      - reservation_time
+      - status
+      - table_no
+      - seats
+      - entrance_time
+      - exit_time
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier of the reservation
+          readOnly: true
+          example: 123
+        user_id:
+          type: integer
+          description: Unique identifier of the user performing the reservation
+          example: 12
+        restaurant_id:
+          type: integer
+          description: Unique identifier of the restaurant to be reserved
+          example: 67
+        reservation_time:
+          type: string
+          format: date-time
+          description: Date and time of the reservation
+        status:
+          type: string
+          description: The reservation status
+          enum:
+            - Declined
+            - Pending
+            - Accepted
+            - Seated
+            - Done
+          example: Accepted
+        table_no:
+          type: integer
+          description: Unique identifier of the reserved table
+          example: 124
+        seats:
+          type: integer
+          description: The number of seats of the reservation 
+          example: 6
+        entrance_time:
+          type: string
+          format: date-time
+          description: The entrance time of the customer for the reservation
+          example:
+        exit_time:
+          type: string
+          format: date-time
+          description: The exit time of the customer for the reservation
