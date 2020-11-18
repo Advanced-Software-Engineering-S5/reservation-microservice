@@ -1,4 +1,4 @@
-from reservations.database import db, Reservation
+from reservation_microservice.database import db, Reservation
 from flask import request, jsonify
 from sqlalchemy.exc import DatabaseError
 from datetime import datetime

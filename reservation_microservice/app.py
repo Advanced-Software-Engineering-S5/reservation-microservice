@@ -1,6 +1,6 @@
 from flask import Flask
 import connexion, logging
-from reservations.database import db, Reservation
+from reservation_microservice.database import db, Reservation
 from datetime import datetime, time
 
 def create_app(dbfile='sqlite:///reservations_service.db'):
