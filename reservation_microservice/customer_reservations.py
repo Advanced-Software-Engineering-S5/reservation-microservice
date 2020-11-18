@@ -1,7 +1,7 @@
 from flask import Blueprint
 from datetime import datetime
-from reservations.classes import customer_reservations as cr
-from reservations.database import Reservation
+from reservation_microservice.classes import customer_reservations as cr
+from reservation_microservice.database import Reservation
 
 def get_reservations(user_id: int):
     res = cr.get_user_reservations(int(user_id))

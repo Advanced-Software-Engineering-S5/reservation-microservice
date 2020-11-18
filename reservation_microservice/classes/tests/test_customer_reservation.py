@@ -1,10 +1,10 @@
 import unittest
-from reservations.database import Reservation, db, User, RestaurantTable, Restaurant
+from reservation_microservice.database import Reservation, db, User, RestaurantTable, Restaurant
 import random
 from flask import Flask
 from datetime import datetime, time, date
-from reservations.database import db, User, Restaurant, Reservation, RestaurantTable, ReservationState
-from reservations.classes import customer_reservations as cr
+from reservation_microservice.database import db, User, Restaurant, Reservation, RestaurantTable, ReservationState
+from reservation_microservice.classes import customer_reservations as cr
 
 
 class CustomerReservationsTest(unittest.TestCase):

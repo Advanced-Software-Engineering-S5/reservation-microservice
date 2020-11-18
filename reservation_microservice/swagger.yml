@@ -11,7 +11,7 @@ paths:
       tags:
       - Reservations
       summary: Get the future reservations of the user specified by the given user_id
-      operationId: reservations.customer_reservations.get_reservations
+      operationId: reservation_microservice.customer_reservations.get_reservations
       parameters:
       - name: user_id
         in: path
@@ -40,7 +40,7 @@ paths:
       tags:
       - Reservations
       summary: Delete the reservation specified by the given reservation_id
-      operationId: reservations.customer_reservations.delete_user_reservation
+      operationId: reservation_microservice.customer_reservations.delete_user_reservation
       parameters:
       - name: reservation_id
         in: path
@@ -64,7 +64,7 @@ paths:
       tags:
       - Reservations
       summary: Update the reservation specified by the given reservation_id
-      operationId: reservations.customer_reservations.update_user_reservation
+      operationId: reservation_microservice.customer_reservations.update_user_reservation
       parameters:
       - name: reservation_id
         in: path

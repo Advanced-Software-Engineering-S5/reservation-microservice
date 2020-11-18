@@ -1,4 +1,4 @@
-from reservations.database import db, Reservation, Restaurant, RestaurantTable, ReservationState
+from reservation_microservice.database import db, Reservation, Restaurant, RestaurantTable, ReservationState
 from datetime import datetime, time, timedelta, date
 from sqlalchemy import func, and_, or_
 
