@@ -101,7 +101,7 @@ paths:
       tags:
       - Reservations
       summary: get the reservations associated to the restaurant specified by restaurant_id
-      operationId: reservations.restaurant_reservations.get_restaurant_reservations
+      operationId: reservation_microservice.restaurant_reservations.get_restaurant_reservations
       parameters:
       - name: restaurant_id
         in: path
@@ -132,7 +132,7 @@ paths:
       tags:
       - Reservations
       summary: Delete all the future reservations associated to the restaurant specified by restaurant_id
-      operationId: reservations.restaurant_reservations.delete_restaurant_reservations
+      operationId: reservation_microservice.restaurant_reservations.delete_restaurant_reservations
       parameters:
       - name: restaurant_id
         in: path
@@ -156,7 +156,7 @@ paths:
       tags:
       - Reservations
       summary: Add a new reservation
-      operationId: reservations.customer_reservations.reserve
+      operationId: reservation_microservice.customer_reservations.reserve
       requestBody:
         required: true
         content:
