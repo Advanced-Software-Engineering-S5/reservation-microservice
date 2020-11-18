@@ -1,4 +1,3 @@
-from flask import Blueprint
 from datetime import datetime
 from reservations.classes import customer_reservations as cr
 from reservations.database import Reservation
@@ -13,17 +12,13 @@ def delete_user_reservation(reservation_id: int):
     if (cr.delete_reservation(reservation_id)):
         return 204
     else:
-        return 404, {'message': 'Reservation not found'}
-    
+        return {'message': 'Reservation not found'}, 404
 
-#TODO: actual implementation
-def delete_restaurant_reservations(restaurant_id: int):
-    return 204
 
 #TODO: actual implementation
 def update_user_reservation(reservation_id: int):
     return 204
 
 #TODO: actual implementation
-def reserve(reservation: Reservation):
+def reserve():
     return 200

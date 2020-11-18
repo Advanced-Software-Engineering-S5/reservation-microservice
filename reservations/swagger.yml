@@ -73,6 +73,20 @@ paths:
         schema:
           pattern: ^[a-zA-Z0-9-]+$
           type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new_reservation_time:
+                  type: string
+                  format: date-time
+                  description: the new date and time of the reservation
+                new_seats:
+                  type: integer
+                  description: the new number of reserved seats
       responses:
         204:
           description: Reservation updated correctly
@@ -81,6 +95,100 @@ paths:
           content: {}
         404: 
           description: The specified reservation does not exist
+          content: {}
+  /reservations/{restaurant_id}:
+    get:
+      tags:
+      - Reservations
+      summary: get the reservations associated to the restaurant specified by restaurant_id
+      operationId: reservations.restaurant_reservations.get_restaurant_reservations
+      parameters:
+      - name: restaurant_id
+        in: path
+        description: Restaurant's unique identifier
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9-]+$
+          type: string
+      responses:
+        200:
+          description: Return the reservations of the restaurant
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+        404:
+          description: The restaurant specified by restaurant_id has no associated reservations
+          content: {}
+        500:
+          description: service error
+          content: {}
+    delete:
+      tags:
+      - Reservations
+      summary: Delete all the future reservations associated to the restaurant specified by restaurant_id
+      operationId: reservations.restaurant_reservations.delete_restaurant_reservations
+      parameters:
+      - name: restaurant_id
+        in: path
+        description: Restaurant's unique identifier
+        required: true
+        schema:
+            pattern: ^[a-zA-Z0-9-]+$
+            type: string
+      responses:
+        204:
+          description: Reservations deleted correctly
+        404:
+          description: The restaurant specified by restaurant_id has no associated reservations
+          content: {}
+        500:
+          description: service error
+          content: {}
+
+  /reserve:
+    post:
+      tags:
+      - Reservations
+      summary: Add a new reservation
+      operationId: reservations.customer_reservations.reserve
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: unique identifier of the user performing the reservation
+                restaurant_id:
+                  type: integer
+                  description: unique identifier of the reserved restaurant
+                reservation_time: 
+                  type: string
+                  format: date-time
+                  description: date and time of the reservation
+                seats:
+                  type: integer
+                  description: the number of reserved seats
+      responses:
+        201:
+          description: Reservation added correctly
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation/properties/id'
+        401:
+          description: You must be authorized to perform this operation
+          content: {}
+        500:
+          description: Error in service
           content: {}
 components:
   schemas:
