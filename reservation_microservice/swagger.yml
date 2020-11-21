@@ -35,6 +35,67 @@ paths:
         404:
           description: No reservations associated with the given user_id
           content: {}
+  /customer_reservations/{user_id}/restaurant/{restaurant_id}:
+    get:
+      tags:
+      - Reservations
+      summary: Get the reservation performed by the user specified by user_id at the restaurant specified by restaurant_id
+      operationId: reservation_microservice.customer_reservations.get_reservations_by_restaurant
+      parameters:
+      - name: user_id
+        in: path
+        description: User's unique identifier
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9-]+$
+          type: string
+      - name: restaurant_id
+        in: path
+        description: Restaurant's unique identifier
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9-]+$
+          type: string
+      - name: uid
+        in: query
+        description: filters reservations by user_id different from the given one. Must be used with both start_time and end_time.
+        required: false
+        schema:
+          type: string
+          enum:
+            - diff
+      - name: start_time
+        in: query
+        description: The start time of the entrance_time for the wanted reservations. Can be used both in combination with end_time or alone.
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: end_time
+        in: query
+        description: The end time of the entrance_time for the wanted reservations. Must be used with start_time.
+        schema:
+          type: string
+          format: date-time
+      responses:
+        200:
+          description: Returns the reservations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+        400:
+          description: parameters error
+          content: {}
+        404:
+          description: no reservations associated to the given user_id or restaurant_id
+          content: {}
+        
   /customer_reservation/{reservation_id}:
     delete:
       tags:
@@ -88,13 +149,17 @@ paths:
                   type: integer
                   description: the new number of reserved seats
       responses:
-        204:
-          description: Reservation updated correctly
+        200:
+          description: OK
+          content: {}
         401: 
           description: You must be authorized to perform this operation
           content: {}
         404: 
           description: The specified reservation does not exist
+          content: {}
+        500:
+          description: service error
           content: {}
   /reservations/{restaurant_id}:
     get:
@@ -178,12 +243,9 @@ paths:
                   type: integer
                   description: the number of reserved seats
       responses:
-        201:
+        200:
           description: Reservation added correctly
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Reservation/properties/id'
+          content: {}
         401:
           description: You must be authorized to perform this operation
           content: {}
@@ -244,8 +306,10 @@ components:
           type: string
           format: date-time
           description: The entrance time of the customer for the reservation
+          nullable: true
           example:
         exit_time:
           type: string
           format: date-time
           description: The exit time of the customer for the reservation
+          nullable: true

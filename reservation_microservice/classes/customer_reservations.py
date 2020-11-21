@@ -29,30 +29,22 @@ def get_overlapping_tables(restaurant_id: int, reservation_time: datetime,
     return overlapping_tables_ids
 
 
-def is_overbooked(restaurant_id: int, reservation_seats: int,
-                  overlapping_tables):
-    n_tables_by_seats = db.session.query(func.count(
-        RestaurantTable.table_id)).filter_by(
-            restaurant_id=restaurant_id).filter_by(
-                seats=reservation_seats).first()[0]
+def is_overbooked(overlapping_tables, restaurant_tables):
     #The restaurant has no tables with the needed number_of_seats
-    if (n_tables_by_seats is None):
+    if (len(restaurant_tables) == 0):
         return True
     # All the tables are occupied in the chosen time interval
-    if (len(overlapping_tables) == n_tables_by_seats):
+    if (len(overlapping_tables) == len(restaurant_tables)):
         return True
-    elif (len(overlapping_tables) < n_tables_by_seats):
+    elif (len(overlapping_tables) < len(restaurant_tables)):
         return False
 
 
-def assign_table_to_reservation(overlapping_tables, restaurant_id: int,
-                                reservation_seats: int):
+def assign_table_to_reservation(overlapping_tables, restaurant_tables):
     #  available_tables contains all the tables that do not overlap with the new reservation.
     #  This condition is needed to bind a table to a reservation
-    available_tables = db.session.query(RestaurantTable).filter_by(
-        restaurant_id=restaurant_id).filter_by(seats=reservation_seats).filter(
-            RestaurantTable.table_id.notin_(overlapping_tables))
-    return available_tables.first()
+    available_tables = [t for t in restaurant_tables if t not in overlapping_tables]
+    return available_tables[0]
 
 
 def add_reservation(reservation: Reservation):
@@ -100,7 +92,7 @@ def get_user_reservations(user_id: int):
     return user_reservations
 
 
-def is_safely_updatable(reservation: Reservation,
+def is_safely_updatable(reservation: Reservation, avg_stay_time: time,
                         new_reservation_time: datetime):
     """ 
     Returns True if the reservation can be safely updated, False otherwise.
@@ -108,7 +100,7 @@ def is_safely_updatable(reservation: Reservation,
     is in the closed interval [reservation_time - avg_stay_time, reservation_time + avg_stay_time]
     """
     old_res_time = reservation.reservation_time.time()
-    avg_stay_time = reservation.restaurant.avg_stay_time
+    avg_stay_time = avg_stay_time
 
     inf_limit_time = diff_time(old_res_time, avg_stay_time)
     sup_limit_time = sum_time(old_res_time, avg_stay_time)
@@ -190,6 +182,7 @@ def delete_reservation(reservation_id: int):
         db.session.delete(reservation_to_be_deleted)
         db.session.commit()
         return True
+
 
 
 def diff_time(t1: time, t2: time):
