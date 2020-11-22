@@ -28,11 +28,15 @@ def reserve():
             return {'message': str(exc)}, 500
         try:
             table_response = requests.get(f'http://{os.environ.get("GOS_RESTAURANT")}/restaurants/tables/{req_body["restaurant_id"]}?seats={req_body["seats"]}')
+            if table_response.status_code == 404:
+                return {'message': 'No tables with the wanted number of seats available'}, 404
             tables = None if response.status_code != 200 else table_response.json()['tables']
+            print(tables)
         except:
             tables = None
         if (tables != None):
             ids = [table['table_id'] for table in tables]
+            print(cr.is_overbooked(overlapping_tables, ids))
             if (cr.is_overbooked(overlapping_tables, ids)):
                 return {
                     'message':
@@ -62,23 +66,27 @@ def reserve():
 def get_reservations(user_id: int):
     try:
         res = cr.get_user_reservations(int(user_id))
+        if (len(res) == 0):
+            return {'message': 'The given user has made no reservations yet'}, 404
         json = [r.to_dict() for r in res]
-        return json
+        return {'reservations': json}
     except DatabaseError as exc:
         return {'message': str(exc)}, 500
 
 
 def get_reservations_by_restaurant(user_id: int):
     uid_diff = request.args.get('exclude_user_id', False)
+    print(uid_diff)
     start = request.args.get('start_time', None)
     end = request.args.get('end_time', None)
     restaurant_id = request.args.get('restaurant_id', None)
     if start is None and end is not None:
-        return {'message': 'uid and end_time can only be used with start_time'}, 400
+        return {'message': 'exclude_user_id and end_time can only be used with start_time'}, 400
 
-    reservations = Reservation.query.filter_by(user_id != user_id) if uid_diff else Reservation.query.filter_by(user_id=user_id)
+    reservations = Reservation.query.filter(Reservation.user_id != user_id) if uid_diff else Reservation.query.filter_by(user_id=user_id)
+    
     if restaurant_id:
-        reservations = reservations.filter(restaurant_id=restaurant_id)
+        reservations = reservations.filter_by(restaurant_id=restaurant_id)
     
     if start and end:
         try:
@@ -106,7 +114,7 @@ def get_reservations_by_restaurant(user_id: int):
 def delete_user_reservation(reservation_id: int):
     try:
         if (cr.delete_reservation(reservation_id)):
-            return 204
+            return {'message': 'Reservation deleted correctly'}
         else:
             return {'message': 'Reservation not found'}, 404
     except DatabaseError as exc:
@@ -153,8 +161,12 @@ def update_user_reservation(reservation_id: int):
                 return str(exc), 500
             try:
                table_response = requests.get(f'http://{os.environ.get("GOS_RESTAURANT")}/restaurants/tables/{reservation.restaurant_id}?seats={new_seats}')
-               tables = None if response.status_code != 200 else table_response.json()['tables']
+               if table_response.status_code == 404:
+                    return {'message': 'No tables with the wanted number of seats available'}, 404
+               tables = None if table_response.status_code != 200 else table_response.json()['tables']
             except:
+                if table_response.status_code == 404:
+                    return {'message': 'No tables with the wanted number of seats available'}, 404
                 tables = None
             if (tables != None):
                 ids = [table['table_id'] for table in tables]
@@ -163,7 +175,7 @@ def update_user_reservation(reservation_id: int):
                     return {
                         'message':
                         'Overbooking: no tables available at the requested date and time'
-                    }, 200
+                    }, 409
                 else:
                     assigned = cr.assign_table_to_reservation(
                         overlapping_tables, ids)

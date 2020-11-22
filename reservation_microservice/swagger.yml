@@ -107,8 +107,9 @@ paths:
           pattern: ^[a-zA-Z0-9-]+$
           type: string
       responses:
-        204:
+        200:
           description: Reservation deleted correctly
+          content: {}
 
         401:
           description: You must be authorized to perform this operation
@@ -179,7 +180,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  pets:
+                  reservations:
                     type: array
                     items:
                       $ref: '#/components/schemas/Reservation'
@@ -216,7 +217,7 @@ paths:
     post:
       tags:
       - Reservations
-      summary: Add a new reservation
+      summary: Adds a new reservation
       operationId: reservation_microservice.customer_reservations.reserve
       requestBody:
         required: true
