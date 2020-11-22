@@ -48,7 +48,7 @@ def reserve():
                 return {
                     'message':
                     'Overbooking: no tables available at the requested date and time'
-                }, 200
+                }, 409
             else:
                 assigned = cr.assign_table_to_reservation(
                     overlapping_tables, tables)
@@ -60,8 +60,8 @@ def reserve():
                     seats=req_body['seats'],
                     table_no=assigned)
                 try:
-                    cr.add_reservation(reservation)
-                    return {'message': 'Reservation confirmed'}, 200
+                    id = cr.add_reservation(reservation)
+                    return {'id': id}, 200
                 except DatabaseError as exc:
                     return str(exc), 500
         else:
@@ -79,13 +79,19 @@ def get_reservations(user_id: int):
         return str(exc), 500
 
 
-def get_reservations_by_restaurant(user_id: int, restaurant_id: int):
-    uid_diff = request.args.get('uid', None)
+def get_reservations_by_restaurant(user_id: int):
+    uid_diff = request.args.get('exclude_user_id', False)
     start = request.args.get('start_time', None)
     end = request.args.get('end_time', None)
-    if (uid_diff and start and end):
-        if (uid_diff != 'diff'):
-            return {'message': 'uid can only have value \'diff\''}, 400
+    restaurant_id = request.args.get('restaurant_id', None)
+    if start is None and end is not None:
+        return {'message': 'uid and end_time can only be used with start_time'}, 400
+
+    reservations = Reservation.query.filter_by(user_id != user_id) if uid_diff else Reservation.query.filter_by(user_id=user_id)
+    if restaurant_id:
+        reservations = reservations.filter(restaurant_id=restaurant_id)
+    
+    if start and end:
         try:
             start_time = datetime.fromisoformat(start)
             end_time = datetime.fromisoformat(end)
@@ -93,41 +99,19 @@ def get_reservations_by_restaurant(user_id: int, restaurant_id: int):
             return {
                 'message': 'start_time and end_time should be in ISO format'
             }, 400
-        try:
-            reservations = db.session.query(Reservation).filter(
-                Reservation.user_id != user_id).filter_by(
-                    restaurant_id=restaurant_id).filter(
-                        Reservation.entrance_time.between(
-                            start_time, end_time)).all()
-            return [r.to_dict() for r in reservations]
-        except DatabaseError as exc:
-            return str(exc), 500
-    elif ((uid_diff or end) and not start):
-        return {
-            'message': 'uid and end_time can only be used with start_time'
-        }, 400
-    elif (start and not end and not uid_diff):
+        reservations = reservations.filter(Reservation.entrance_time != None, Reservation.entrance_time.between(start_time, end_time))
+    elif start and end is None:
         try:
             start_time = datetime.fromisoformat(start)
         except ValueError:
             return {'message': 'start_time should be in ISO format'}, 400
-        try:
-            reservations = db.session.query(Reservation).filter_by(
-                user_id=user_id, restaurant_id=restaurant_id).filter(
-                    Reservation.entrance_time != None).filter(
-                        Reservation.entrance_time >= start_time).all()
-            return [r.to_dict() for r in reservations]
-        except DatabaseError as exc:
-            return str(exc), 500
-    elif (not uid_diff and not start and not end):
-        try:
-            reservations = db.session.query(Reservation).filter_by(
-                user_id=user_id, restaurant_id=restaurant_id)
-            return [r.to_dict() for r in reservations]
-        except DatabaseError as exc:
-            return str(exc), 500
-    else:
-        return {'message': 'Bad Request'}, 400
+        reservations = reservations.filter(Reservation.entrance_time != None).\
+            filter(Reservation.entrance_time >= start_time)
+    try:
+        # execute filtered query
+        return {'reservations': [r.to_dict() for r in reservations.all()]}
+    except DatabaseError as exc:
+        return str(exc), 500
 
 
 def delete_user_reservation(reservation_id: int):

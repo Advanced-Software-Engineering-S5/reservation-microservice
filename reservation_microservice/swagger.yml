@@ -35,11 +35,11 @@ paths:
         404:
           description: No reservations associated with the given user_id
           content: {}
-  /customer_reservations/{user_id}/restaurant/{restaurant_id}:
+  /filtered_reservations/{user_id}:
     get:
       tags:
       - Reservations
-      summary: Get the reservation performed by the user specified by user_id at the restaurant specified by restaurant_id
+      summary: Get the reservation performed by the user specified by user_id with filters provided as query args.
       operationId: reservation_microservice.customer_reservations.get_reservations_by_restaurant
       parameters:
       - name: user_id
@@ -50,20 +50,19 @@ paths:
           pattern: ^[a-zA-Z0-9-]+$
           type: string
       - name: restaurant_id
-        in: path
-        description: Restaurant's unique identifier
-        required: true
+        in: query
+        description: If specified, filters results by provided Restaurant's unique identifier too
+        required: false
         schema:
           pattern: ^[a-zA-Z0-9-]+$
           type: string
-      - name: uid
+      - name: exclude_user_id
         in: query
-        description: filters reservations by user_id different from the given one. Must be used with both start_time and end_time.
+        description: Whether to filter reservations by user_id different from the given one. Defaults to false.
         required: false
         schema:
-          type: string
-          enum:
-            - diff
+          type: boolean
+          default: False
       - name: start_time
         in: query
         description: The start time of the entrance_time for the wanted reservations. Can be used both in combination with end_time or alone.
@@ -85,15 +84,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  pets:
+                  reservations:
                     type: array
                     items:
                       $ref: '#/components/schemas/Reservation'
         400:
-          description: parameters error
-          content: {}
-        404:
-          description: no reservations associated to the given user_id or restaurant_id
+          description: Bad request, parameters error.
           content: {}
         
   /customer_reservation/{reservation_id}:

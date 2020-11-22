@@ -49,7 +49,10 @@ def assign_table_to_reservation(overlapping_tables, restaurant_tables):
 
 def add_reservation(reservation: Reservation):
     db.session.add(reservation)
-    db.session.commit()
+    db.session.flush()
+    # get assigned id
+    db.session.refresh(reservation)
+    return reservation.id
 
 
 def reserve(restaurant: Restaurant, reservation_time: datetime,
