@@ -35,11 +35,11 @@ paths:
         404:
           description: No reservations associated with the given user_id
           content: {}
-  /customer_reservations/{user_id}/restaurant/{restaurant_id}:
+  /filtered_reservations/{user_id}:
     get:
       tags:
       - Reservations
-      summary: Get the reservation performed by the user specified by user_id at the restaurant specified by restaurant_id
+      summary: Get the reservation performed by the user specified by user_id with filters provided as query args.
       operationId: reservation_microservice.customer_reservations.get_reservations_by_restaurant
       parameters:
       - name: user_id
@@ -50,20 +50,19 @@ paths:
           pattern: ^[a-zA-Z0-9-]+$
           type: string
       - name: restaurant_id
-        in: path
-        description: Restaurant's unique identifier
-        required: true
+        in: query
+        description: If specified, filters results by provided Restaurant's unique identifier too
+        required: false
         schema:
           pattern: ^[a-zA-Z0-9-]+$
           type: string
-      - name: uid
+      - name: exclude_user_id
         in: query
-        description: filters reservations by user_id different from the given one. Must be used with both start_time and end_time.
+        description: Whether to filter reservations by user_id different from the given one. Defaults to false.
         required: false
         schema:
-          type: string
-          enum:
-            - diff
+          type: boolean
+          default: False
       - name: start_time
         in: query
         description: The start time of the entrance_time for the wanted reservations. Can be used both in combination with end_time or alone.
@@ -85,15 +84,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  pets:
+                  reservations:
                     type: array
                     items:
                       $ref: '#/components/schemas/Reservation'
         400:
-          description: parameters error
-          content: {}
-        404:
-          description: no reservations associated to the given user_id or restaurant_id
+          description: Bad request, parameters error.
           content: {}
         
   /customer_reservation/{reservation_id}:
@@ -252,6 +248,40 @@ paths:
         500:
           description: Error in service
           content: {}
+  /contact_tracing/{positive_user_id}:
+    get:
+      tags:
+      - Contact Tracing
+      summary: Implements contact tracing feature. Given a user id, returns a list of users which
+              were allegedly in contact with the specified user within the last `contact_days` days (defaults to 14). 
+      operationId: reservation_microservice.classes.contact_tracing.contact_tracing
+      parameters:
+      - name: positive_user_id
+        in: path
+        description: User's Unique identifier
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9-]+$
+          type: string
+      - name: contact_days
+        in: query
+        description: How many days in the past should we check for possible contacts. Defaults to 14.
+        required: false
+        schema:
+          type: integer
+          default: 14
+      responses:
+        200:
+          description: Returns a list of users in contact with the positive user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
 components:
   schemas:
     Reservation:
@@ -313,3 +343,72 @@ components:
           format: date-time
           description: The exit time of the customer for the reservation
           nullable: true
+    User:
+      description: User datatype
+      type: object
+      properties:
+        id:
+          description: User ID
+          type: integer
+        email:
+          description: User e-mail
+          type: string
+          format: email
+          pattern: ^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$
+          maxLength: 128
+        firstname:
+          description: User first name
+          type: string          
+          maxLength: 128
+          nullable: true
+        lastname:
+          description: User last name
+          type: string          
+          maxLength: 128
+          nullable: true
+        fiscal_code:
+          description: User fiscal code
+          type: string
+          maxLength: 50
+          nullable: true
+        phone:
+          description: User phone number
+          type: string
+          maxLength: 20
+          nullable: true
+        password:
+          description: User password (hashed)
+          type: string
+          nullable: true
+        dateofbirth:
+          description: User birthday
+          type: string
+          format: date-time
+          nullable: true
+        confirmed_positive_date:
+          description: User COVID positivity date
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          description: \?
+          type: boolean
+          nullable: true
+        is_admin:
+          description: Is user an health authority?
+          type: boolean
+          nullable: true
+        is_positive:
+          description: Is user covid positive
+          type: boolean
+          nullable: true
+        reported_positive_date:
+          description: User reported COVID positivity date
+          type: string
+          format: date-time
+          nullable: true
+        restaurant_id:
+          description: User restaurant id (if operator)
+          type: integer
+          nullable: true
+
