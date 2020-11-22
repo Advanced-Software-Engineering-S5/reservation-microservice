@@ -9,9 +9,11 @@ def get_restaurant_reservations(restaurant_id: int):
     except DatabaseError as exc:
         return str(exc), 500
     if (len(reservations) > 0):
-        return jsonify([res.to_dict() for res in reservations]), 200
+        return [res.to_dict() for res in reservations], 200
     else:
         return {'message': 'No reservations associated to the given restaurant_id'}, 404
+    
+
 
 def delete_restaurant_reservations(restaurant_id: int):
     try:

@@ -15,13 +15,14 @@ def create_app(dbfile='sqlite:///reservations_service.db'):
     application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(application)
-    #db.drop_all(app=app)
+    #db.drop_all(app=application)
     db.create_all(app=application)
 
     with application.app_context():
-        reservation = Reservation(user_id=1, restaurant_id=1, seats=4, table_no=2, reservation_time=datetime.combine(datetime.now().date(), time(hour=21, minute=30)))
-        db.session.add(reservation)
-        db.session.commit()
+        if (db.session.query(Reservation).first() is None):
+            reservation = Reservation(user_id=1, restaurant_id=1, seats=4, table_no=2, reservation_time=datetime.combine(datetime.now().date(), time(hour=21, minute=30)))
+            db.session.add(reservation)
+            db.session.commit()
 
 
     return application
@@ -29,4 +30,4 @@ def create_app(dbfile='sqlite:///reservations_service.db'):
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(port=8080)
+    app.run(port=5069)
