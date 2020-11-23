@@ -15,7 +15,7 @@ def reserve():
         restaurant = None if response.status_code != 200 else response.json()
     except requests.exceptions.RequestException as exc:
         restaurant = None
-    if (restaurant != None):
+    if restaurant is not None:
         avg_stay_time = datetime.strptime(restaurant['avg_stay_time'], '%H:%M:%S').time()
         try:
             overlapping_tables = cr.get_overlapping_tables(
@@ -34,7 +34,7 @@ def reserve():
             print(tables)
         except:
             tables = None
-        if (tables != None):
+        if tables is not None:
             ids = [table['table_id'] for table in tables]
             print(cr.is_overbooked(overlapping_tables, ids))
             if (cr.is_overbooked(overlapping_tables, ids)):
