@@ -9,7 +9,7 @@ paths:
   /customer_reservations/{user_id}:
     get:
       tags:
-      - Reservations
+      - Customer reservations
       summary: Get the future reservations of the user specified by the given user_id
       operationId: reservation_microservice.customer_reservations.get_reservations
       parameters:
@@ -38,7 +38,7 @@ paths:
   /filtered_reservations/{user_id}:
     get:
       tags:
-      - Reservations
+      - Customer reservations
       summary: Get the reservation performed by the user specified by user_id with filters provided as query args.
       operationId: reservation_microservice.customer_reservations.get_reservations_by_restaurant
       parameters:
@@ -95,7 +95,7 @@ paths:
   /customer_reservation/{reservation_id}:
     delete:
       tags:
-      - Reservations
+      - Customer reservations
       summary: Delete the reservation specified by the given reservation_id
       operationId: reservation_microservice.customer_reservations.delete_user_reservation
       parameters:
@@ -120,7 +120,7 @@ paths:
           content: {}
     put:
       tags:
-      - Reservations
+      - Customer reservations
       summary: Update the reservation specified by the given reservation_id
       operationId: reservation_microservice.customer_reservations.update_user_reservation
       parameters:
@@ -161,7 +161,7 @@ paths:
   /reservations/{restaurant_id}:
     get:
       tags:
-      - Reservations
+      - Operator reservations
       summary: get the reservations associated to the restaurant specified by restaurant_id
       operationId: reservation_microservice.restaurant_reservations.get_restaurant_reservations
       parameters:
@@ -172,9 +172,44 @@ paths:
         schema:
           pattern: ^[a-zA-Z0-9-]+$
           type: string
+      - name: range
+        in: query
+        required: False
+        schema:
+          type: string
+          enum:
+            - today
+            - upcoming
+          description: a relative time range filtering the reservations based on their time. More to be added
+          example: today
+      - name: seated
+        in: query
+        required: False
+        schema:
+          type: boolean
+          default: False
+          description: used to filter the reservations by the SEATED status, in order to get the number of currently seated customer. Should be used alone.
+      - name: page
+        in: query
+        required: False
+        schema:
+          type: integer
+          description: an integer indicating the current page
+          default: 1
+          example: 2
+      - name: page_size
+        in: query
+        required: False
+        schema:
+          type: integer
+          enum:
+          - 6
+          default: 6
+        description: an integer indicating the number of reservations to be fetched, can only be used with the page parameter. 
+                     Currently, the only accepted value is 6.
       responses:
         200:
-          description: Return the reservations of the restaurant
+          description: Return the reservations of the restaurant.
           content:
             application/json:
               schema:
@@ -192,7 +227,7 @@ paths:
           content: {}
     delete:
       tags:
-      - Reservations
+      - Operator reservations
       summary: Delete all the future reservations associated to the restaurant specified by restaurant_id
       operationId: reservation_microservice.restaurant_reservations.delete_restaurant_reservations
       parameters:
@@ -212,11 +247,53 @@ paths:
         500:
           description: service error
           content: {}
+  /reservation/{reservation_id}/status:
+    put:
+      tags:
+      - Operator reservations
+      summary: Update the status of the reservation specified by reservation_id.
+      operationId: reservation_microservice.restaurant_reservations.update_reservation_status
+      parameters:
+      - name: reservation_id
+        in: path
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9-]+$
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: integer
+                  description: An integer representing the status of the reservation. (0 = Declined, 1 = Pending, 2 = Accepted, 3 = Seated, 4 = Done)
+                  minimum: 0
+                  maximum: 4
+                time:
+                  type: string
+                  format: date-time
+                  description: A datetime in ISO format that describes the entrance/exit of the user. 
+                               A real date should only be used with the values '3' and '4' of the status parameter,
+                               an empty string should be sent with the others.
+                  example: '2020-11-22T22:00:00'
+      responses:
+        200:
+          description: Reservation updated correctly
+          content: {}
+        404:
+          description: Reservation not found
+          content: {}
+        500:
+          description: Service error
+          content: {}
 
   /reserve:
     post:
       tags:
-      - Reservations
+      - Customer reservations
       summary: Adds a new reservation
       operationId: reservation_microservice.customer_reservations.reserve
       requestBody:
