@@ -1,4 +1,4 @@
-from reservation_microservice.database import db, Reservation, Restaurant, RestaurantTable, ReservationState
+from reservation_microservice.database import db, Reservation, ReservationState
 from datetime import datetime, time, timedelta, date
 from sqlalchemy import func, and_, or_
 
@@ -43,7 +43,7 @@ def assign_table_to_reservation(overlapping_tables, restaurant_tables):
     #  available_tables contains all the tables that do not overlap with the new reservation.
     #  This condition is needed to bind a table to a reservation
     available_tables = [t for t in restaurant_tables if t not in overlapping_tables]
-    return available_tables[0]
+    return available_tables[0] if len(available_tables) > 0 else None
 
 
 def add_reservation(reservation: Reservation):
@@ -52,32 +52,6 @@ def add_reservation(reservation: Reservation):
     # get assigned id
     db.session.refresh(reservation)
     return reservation.id
-
-
-def reserve(restaurant: Restaurant, reservation_time: datetime,
-            reservation_seats: int, user_id: int):
-    """ 
-    Returns True if a reservation is performed, False otherwise.
-    """
-    overlapping_tables = get_overlapping_tables(restaurant.id,
-                                                reservation_time,
-                                                reservation_seats,
-                                                restaurant.avg_stay_time)
-    if (is_overbooked(restaurant.id, reservation_seats, overlapping_tables)):
-        return False
-    else:
-        assigned_table = assign_table_to_reservation(
-            overlapping_tables=overlapping_tables,
-            restaurant_id=restaurant.id,
-            reservation_seats=reservation_seats)
-        reservation = Reservation(user_id=user_id,
-                                  restaurant_id=restaurant.id,
-                                  reservation_time=reservation_time,
-                                  seats=reservation_seats,
-                                  table_no=assigned_table.table_id)
-        add_reservation(reservation)
-        return True
-
 
 def get_user_reservations(user_id: int):
     """ 
@@ -117,57 +91,6 @@ def is_safely_updatable(reservation: Reservation, avg_stay_time: time,
         return True
     else:
         return False
-
-
-def is_existing_reservation(restaurant_id: int, user_id: int,
-                            reservation_time: datetime, seats: int):
-    """ 
-    Returns True if the user specified by the given user_id already has a reservation at the restaurant
-    specified by restaurant_id, for the time and seats specified by reservation_time and seats; False
-    otherwise.
-    """
-    existing_reservation = db.session.query(Reservation).filter_by(
-        user_id=user_id).filter_by(restaurant_id=restaurant_id).filter_by(
-            reservation_time=reservation_time).filter_by(seats=seats).first()
-
-    if (existing_reservation == None):
-        return False
-    else:
-        return True
-
-
-def update_reservation(reservation: Reservation,
-                       new_reservation_time: datetime, new_seats: int):
-    """ 
-    Returns True if the reservion is updated, False otherwise.
-    """
-    if (new_seats == reservation.seats
-            and is_safely_updatable(reservation, new_reservation_time)):
-        reservation.reservation_time = new_reservation_time
-        reservation.status = ReservationState.PENDING
-        db.session.commit()
-        return True
-    else:
-        overlapping_tables = get_overlapping_tables(
-            restaurant_id=reservation.restaurant_id,
-            reservation_time=new_reservation_time,
-            reservation_seats=new_seats,
-            avg_stay_time=reservation.restaurant.avg_stay_time)
-        if (is_overbooked(restaurant_id=reservation.restaurant_id,
-                          reservation_seats=new_seats,
-                          overlapping_tables=overlapping_tables)):
-            return False
-        else:
-            new_table = assign_table_to_reservation(
-                overlapping_tables=overlapping_tables,
-                restaurant_id=reservation.restaurant_id,
-                reservation_seats=new_seats)
-            reservation.reservation_time = new_reservation_time
-            reservation.table_no = new_table.table_id
-            reservation.seats = new_seats
-            reservation.status = ReservationState.PENDING
-            db.session.commit()
-            return True
 
 
 def delete_reservation(reservation_id: int):

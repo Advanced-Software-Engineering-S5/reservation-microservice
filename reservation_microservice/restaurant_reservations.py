@@ -6,7 +6,6 @@ from datetime import datetime, date
 
 def get_restaurant_reservations(restaurant_id: int):
 
-    print(request.args.to_dict())
     #request values
     time_range = request.args.get('range', None)
     seated = request.args.get('seated', False)
@@ -19,9 +18,7 @@ def get_restaurant_reservations(restaurant_id: int):
         reservations = reservations.filter_by(status=ReservationState.SEATED)
         try:
             res = [r.to_dict() for r in reservations.all()]
-            return {
-                'reservations': res
-            }
+            return {'reservations': res}
         except DatabaseError as exc:
             return {'message': str(exc)}, 500
     #gets the reservation in the specified time range
@@ -46,6 +43,7 @@ def get_restaurant_reservations(restaurant_id: int):
     try:
         #returns reservations
         res = [r.to_dict() for r in reservations.all()]
+        print(res)
         return {
             'reservations': res
         } if len(res) > 0 else {
@@ -89,6 +87,7 @@ def update_reservation_status(reservation_id: int):
     except DatabaseError as exc:
         return {'message': str(exc)}, 500
 
+
 def delete_restaurant_reservations(restaurant_id: int):
     try:
         future_res = db.session.query(Reservation).filter_by(
@@ -102,6 +101,6 @@ def delete_restaurant_reservations(restaurant_id: int):
             }, 404
         else:
             db.session.commit()
-            return 204
+            return {'message': 'Reservations deleted correctly'}
     except DatabaseError as exc:
-        return str(exc), 500
+        return {'message': str(exc)}, 500

@@ -84,31 +84,6 @@ class TestCustomerReservationsEndpoints(unittest.TestCase):
             }   
         ]
 
-        self.added_restaurant_ids = []
-
-        for restaurant in self.restaurants_list:
-            try:
-                res = requests.post(f'http://localhost:5030/restaurants/new', json=restaurant)
-                if (res.status_code == 200):
-                    id = res.json()
-                    self.added_restaurant_ids.append(id)
-                    table = {
-                        'table_id': 1,
-                        'restaurant_id': id, 
-                        'seats': 4
-                    }
-                    req_body = {
-                        'tables': [
-                            table
-                        ]
-                    }
-                    try:
-                        table_res = requests.put(f'http://localhost:5030/restaurants/{id}', json=req_body)
-                    except requests.RequestException as exc:
-                        print(exc)
-            except requests.RequestException as exc:
-                print(exc)
-
         self.app = create_app(dbfile='sqlite:///:memory:')
 
 
@@ -116,14 +91,6 @@ class TestCustomerReservationsEndpoints(unittest.TestCase):
             for res in self.reservations_list:
                 db.session.add(Reservation(**res))
             db.session.commit()
-
-    def tearDown(self):
-        restaurants = requests.get('http://localhost:5030/restaurants').json()
-        for restaurant in restaurants:
-            if(restaurant['id'] == 1):
-                continue
-            else:
-                res = requests.delete(f'http://localhost:5030/restaurants/{restaurant["id"]}')
 
     def test_get_user_reservations(self):
         with self.app.test_client() as client:
@@ -171,9 +138,7 @@ class TestCustomerReservationsEndpoints(unittest.TestCase):
         self.assertEqual(response_true.status_code, 200)
         self.assertEqual(response_false.status_code, 404)
     
-    def test_reserve(self):
-        print(self.added_restaurant_ids)
-        
+    def test_reserve(self):        
         reservation_1 = {
             'user_id': 1,
             'restaurant_id': 1, #restaurant with id 1 is the Trial Restaurant in the restaurant_microservice
@@ -192,6 +157,12 @@ class TestCustomerReservationsEndpoints(unittest.TestCase):
             'reservation_time': datetime.combine(datetime.today(), time(hour=10, minute=00)).isoformat(),
             'seats': 6
         }
+        reservation_4 = {
+            'user_id': 1,
+            'restaurant_id': 125,
+            'reservation_time': datetime.combine(datetime.today(), time(hour=10, minute=00)).isoformat(),
+            'seats': 6
+        }
         
         with self.app.test_client() as client:
             #Needed to store the newly added reservations
@@ -199,17 +170,23 @@ class TestCustomerReservationsEndpoints(unittest.TestCase):
             # restaurant with id 1 has a single table with 4 seats, both reservation should be added returning 200 as status_code
             # note that the two reservation_time are not conflicting considering the avg_stay_time of the restaurant.
                 response_res_1 = client.post('/reserve', json=reservation_1)
-
+                print(response_res_1.get_json())
                 response_res_2 = client.post('/reserve', json=reservation_2)
-
+                print(response_res_2.get_json())
+                #No tables with 6 seats
                 response_res_3 = client.post('reserve', json=reservation_3)
+                print(response_res_3.get_json())
+
                 #restaurant with id 1 has a single table with 4 seats, thus the new reservation should fail returning 409 as status code
                 #this code is associated with overbooking
                 response_res_4 = client.post('/reserve', json=reservation_1)
+
+                response_res_5 = client.post('/reserve', json=reservation_4)
         self.assertEqual(response_res_1.status_code, 200)
         self.assertEqual(response_res_2.status_code, 200)
         self.assertEqual(response_res_3.status_code, 404)
         self.assertEqual(response_res_4.status_code, 409)
+        self.assertEqual(response_res_5.status_code, 404)
 
 
     def test_update_user_reservation(self):
@@ -229,7 +206,7 @@ class TestCustomerReservationsEndpoints(unittest.TestCase):
             with self.app.app_context():
                 #This can be performed since there are no other conflicting reservations, the status_code of the response should be 200
                 response_res_1 = client.put('customer_reservation/54', json=res_update_1)
-                #This cannot, since reservation with id=55 is in conflict, the status_code of the response should be 409
+                #This cannot, since there is a conflict with reservation with id=55 , the status_code of the response should be 409
                 response_res_2 = client.put('customer_reservation/54', json=res_update_2)
                 #this must return 404 since the restaurant with id=1 has no tables with seats=6
                 response_res_3 = client.put('customer_reservation/54', json=res_update_3)

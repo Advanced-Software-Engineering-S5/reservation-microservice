@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import request, jsonify
+from flask import request
 from sqlalchemy import between
 from sqlalchemy.exc import DatabaseError
 from reservation_microservice.classes import customer_reservations as cr
@@ -13,8 +13,11 @@ def reserve():
     try:
         response = requests.get(f'http://{os.environ.get("GOS_RESTAURANT")}/restaurants/{req_body["restaurant_id"]}')
         restaurant = None if response.status_code != 200 else response.json()
+        if response.status_code == 404:
+            return {'message': 'Restaurant not found'}, 404
     except requests.exceptions.RequestException as exc:
         restaurant = None
+        
     if (restaurant != None):
         avg_stay_time = datetime.strptime(restaurant['avg_stay_time'], '%H:%M:%S').time()
         try:
@@ -137,6 +140,8 @@ def update_user_reservation(reservation_id: int):
     try:
         response = requests.get(f'http://{os.environ.get("GOS_RESTAURANT")}/restaurants/{reservation.restaurant_id}')
         restaurant = None if response.status_code != 200 else response.json()
+        if response.status_code == 404:
+            return {'message': 'Restaurant not found'}, 404
     except:
         restaurant = None
     if (restaurant != None):
