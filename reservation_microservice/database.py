@@ -53,4 +53,9 @@ class Reservation(db.Model):
         'entrance_time': getattr(self, 'entrance_time'),
         'exit_time': getattr(self, 'exit_time')}
         
+        if res_dict['entrance_time'] is not None:
+            res_dict['entrance_time'] = res_dict['entrance_time'].isoformat()
+        if res_dict['exit_time'] is not None:
+            res_dict['exit_time'] = res_dict['exit_time'].isoformat()
+        
         return res_dict
