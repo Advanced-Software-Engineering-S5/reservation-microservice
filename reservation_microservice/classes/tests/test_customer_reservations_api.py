@@ -104,6 +104,14 @@ class TestCustomerReservationsEndpoints(unittest.TestCase):
         self.assertEqual(len(response_user1.get_json()['reservations']), 2)
         self.assertEqual(len(response_user2.get_json()['reservations']), 1)
         self.assertEqual(response_user3.status_code, 404)
+    
+    def test_get_reservations(self):
+        with self.app.test_client() as client:
+            response_reservation = client.get('customer_reservation/51')
+            response_no_reservation = client.get('customer_reservation/126')
+
+        self.assertEqual(response_reservation.status_code, 200)
+        self.assertEqual(response_no_reservation.status_code, 404)
               
     
     def test_get_user_reservations_by_restaurant(self):
@@ -137,6 +145,7 @@ class TestCustomerReservationsEndpoints(unittest.TestCase):
             response_false = client.delete(f'/customer_reservation/10000')
         self.assertEqual(response_true.status_code, 200)
         self.assertEqual(response_false.status_code, 404)
+    
     
     def test_reserve(self):        
         reservation_1 = {

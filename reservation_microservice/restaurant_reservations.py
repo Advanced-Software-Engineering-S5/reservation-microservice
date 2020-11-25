@@ -44,9 +44,12 @@ def get_restaurant_reservations(restaurant_id: int):
         #returns reservations
         res = [r.to_dict() for r in reservations.all()]
         print(res)
-        return {
-            'reservations': res
-        } if len(res) > 0 else {
+        if len(res) > 0:
+            return {
+                'reservations': res
+            }, 200 
+        else: 
+            return {
             'message': 'No Reservations associated to the specified restaurant'
         }, 404
     except DatabaseError as exc:

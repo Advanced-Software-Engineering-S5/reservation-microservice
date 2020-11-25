@@ -75,6 +75,16 @@ def get_reservations(user_id: int):
     except DatabaseError as exc:
         return {'message': str(exc)}, 500
 
+def get_reservation(reservation_id: int):
+    try:
+        reservation = Reservation.query.filter_by(id=reservation_id).first()
+        if reservation is not None:
+            return {'reservation': reservation.to_dict()}
+        else:
+            return {'message': 'Reservation not found'}, 404
+    except DatabaseError as exc:
+        return {'message': str(exc)}, 500
+
 
 def get_reservations_by_restaurant(user_id: int):
     uid_diff = request.args.get('exclude_user_id', False)
